@@ -28,7 +28,7 @@ Establishing a connection and setting up events
 //it will try and use window.location with a
 //regular ws socket and not a wss socket.
 
-var socket = new io('http://localhost:8080');
+var socket = new dio('http://localhost:8080');
 
 socket.on('error', function(err) {
   //an error occurred
