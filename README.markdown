@@ -140,3 +140,61 @@ Be warned, the Objective-C version does require manual cleanup to prevent memory
 [someSocket removeListener: @"event" forKey:@"The Key You Specified for the Listener"];
 ```
 Otherwise ARC will not reduce the retain count until the block has been released.
+
+Dependencies
+--------------
+PocketSocket - https://github.com/zwopple/PocketSocket
+
+PocketSocket is required as the DIOSocket wraps a PSWebSocket and the TEventEmitter together to handle the packets and events.
+
+Getting Started
+------------------
+
+First thing import the proper header file
+```
+#import "DIOSocket.h"
+```
+
+Next up create an instance and setup events
+```
+self.socket = [[DIOSocket alloc] init];
+
+[self.socket on:@"connect" forKey:@"MyListenerKey" withBlock:^(id data){
+  //there is no data for the connect event;
+}];
+
+[self.socket on:@"error" forKey:@"MyListenerKey" withBlock:^(id data) {
+  //data is an NSError object.
+}];
+
+[self.socket on:@"close" forKey:@"MyListenerKey" withBlock:^(id data) {
+  //socket closed. There is no data
+}];
+
+[self.socket on:@"someevent" forKey:@"MyListenerKey" withBlock:^(id data) {
+  //On events from the server the data is actually an NSMutableArray
+  //The NSMutableArray is from the NSJSONSerialization
+  NSMutableArray *args = (NSMutableArray *)data;
+  if(args.count > 0) {
+    //do something with it
+    //When emitting the withData argument must have a compatible NSArray or
+    //NSMutableArray with data that is compatible with NSJSONSerialization
+    [self.socket emit:@"someevent" withData:args];
+  }
+}];
+
+[self.socket connect:[NSURLRequest requestWithURL:[NSURL urlWithString:@"ws://localhost:8080"]]];
+```
+
+Remember when emitting the withData arg must have a compatible NSArray or NSMutableArray that has data that is compatible with NSJSONSerialization. That means the data in the Array must be one of the following: NSDictionary,NSMutableDictionary,NSArray,NSMutableArray,NSNumber,NSNull, or NSString.
+
+Removing listeners on dealloc for a temporary object if app is not closing
+```
+- (void)dealloc {
+  [self.socket removeListener:@"connect" forKey:@"MyListenerKey"];
+  [self.socket removeListener:@"error" forKey:@"MyListenerKey"];
+  [self.socket removeListener:@"close" forKey:@"MyListenerKey"];
+  [self.socket removeListener:@"someevent" forKey:@"MyListenerKey"];
+}
+...
+```
