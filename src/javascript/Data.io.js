@@ -24,7 +24,9 @@
     }
 
     if(ws) {
-      return new Socket(new ws(uri));
+      var socket = new Socket(new ws(uri));
+      socket.uri = uri;
+      return socket;
     }
 
     return null;

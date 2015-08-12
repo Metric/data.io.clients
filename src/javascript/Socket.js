@@ -16,10 +16,12 @@ Socket.prototype.init = function(ws) {
     this.ws.onclose = function(res) {
       _this.connected = false;
       _this.broadcast('close', res);
+      _this.ws = null;
     };
     this.ws.onerror = function(er) {
       _this.connected = false;
       _this.broadcast('error', er);
+      _this.ws = null;
     };
     this.ws.onopen = function() {
       _this.connected = true;
@@ -73,6 +75,12 @@ Socket.prototype.close = function() {
   }
 
   return this;
+};
+
+Socket.prototype.connect = function() {
+  if(!this.ws && this.uri) {
+    this.init(new ws(this.uri));
+  }
 };
 
 // emit the data for the event to the server

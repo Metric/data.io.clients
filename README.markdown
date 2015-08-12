@@ -54,6 +54,10 @@ socket.close();
 if(socket.connected) {
   //do whatever
 }
+
+//If you ever lose connection and need to reconnect
+//will only work if not connected already
+socket.connect();
 ```
 
 C# Client
