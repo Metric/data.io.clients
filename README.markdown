@@ -60,12 +60,30 @@ if(socket.connected) {
 socket.connect();
 ```
 
+Example of reconnecting on connection lost
+```
+socket.on('error', function(err) {
+  //This is assuming you have a dialog class you can call to ask
+  //The user if they want to reconnect
+  var dialog = new Dialog('Connection lost...', 'Retry', function() {
+    socket.connect();
+  });
+});
+socket.on('close', function() {
+  //This is assuming you have a dialog class you can call to ask
+  //The user if they want to reconnect
+  var dialog = new Dialog('Connection lost...', 'Retry', function() {
+    socket.connect();
+  });
+});
+```
+
 C# Client
 ==============
 
 The C# is a little more complicated and limited in how stuff is handled. One cool thing about C# is that the events are actually on another thread and not the main thread! Be careful of thread safety!
 
-The C# client is compatible with Unity3D and is built using Mono. You can find all the necessary DLLs in the build folder. They should be compatible with Linux and Windows .Net 2.0+.
+The C# client is compatible with Unity3D and is built using Mono. You can find all the necessary DLLs in the build folder. They should be compatible with Linux, Mac, and Windows .Net 2.0+.
 
 If using with Unity3D you will need to use Loom.cs to return back to the Unity3D main thread from an event to update the UI and such. Just put the DLLs in your plugin folder for Unity3D to use.
 
@@ -84,6 +102,9 @@ The simplejson dll is precompiled for .net 2.0+. Usually simplejson only comes i
 
 The DLLs are included in the build folder along with the pre-built DataIOClient.dll
 
+This latest build has some major changes to how things work internally for the C# client.
+As well as, how to add your event listener.
+
 Getting Started
 -----------------
 
@@ -95,36 +116,58 @@ using Data.io.Lib;
 using SimpleJson;
 ```
 
+After importing you are going to need to determine what sort of events you are going to need.
+Here are all possible objects that can come through via a delegate:
+
+* string
+* long
+* double
+* JsonObject
+* JsonArray
+
+And one special case is for errors
+
+* ErrorEventArgs 
+
+Knowing these you can create your corresponding delegates. If you are not receiving any data from the event, except the event itself. Then, you can simply use an (Action)delegate() {}.
+
+So let's see some examples.
+
+If my event is simply receiving a string then I will need a delegate as follows.
+
+```
+delegate void StringEvent(string s);
+```
+
+You will want to keep your delegates as generic as possible for reuse. However, sometimes you will need a special one such as:
+
+```
+delegate void GameCompleteEvent(string winner, long winAmount, long loseAmount);
+```
+
+For the error event you will need a delegate like so.
+
+```
+delegate void ErrorEvent(ErrorEventArgs e);
+```
+
 Next step is creating a socket. Use the static Client helper functions.
 ```
 Socket socket = Client.Create("ws://localhost:8080");
 
 //Subscribe to events first before calling socket.connect()
-socket.on("connect",(object[] args) => {
-  //socket connected to client do whatever you need too.
+socket.on("connect", (Action)delegate() {
+  //socket connected to server
   //there are no args for this event
 });
-socket.on("someevent", (object[] args) => {
-  //always check to see if there are args!
-  if(args.length > 0) {
-    //okay we actually have something
-    //Remember if there are objects than they will be JsonObject
-    //Or if they are arrays they will be JsonArray
-    //The only things that are not are numbers, bools, and nulls.
-
-    //remember this is in a separate thread
-    //if you need to access ui you will need to switch threads.
-
-    //If we know we have an object in the first arg
-    JsonObject jobj = (JsonObject)args[0];
-    //do whatever with it.
-  }
+socket.on("someevent", (StringEvent)delegate(string something) {
+  
 });
-socket.on("close", (object[] args) => {
+socket.on("close", (Action)delegate() {
   //socket was closed. There are no args
 });
-socket.on("error", (object[] args) => {
-  //if an error happens. The first element in args is an ErrorEventArgs.
+socket.on("error", (ErrorEvent)delegate(ErrorEventArgs e) {
+
 });
 
 //now connect
@@ -132,73 +175,16 @@ socket.connect();
 
 //if you need to close
 socket.close();
+
+//to check to see if the socket is still connected:
+socket.isConnected
 ```
+
+For those that wish to use this with Unity3D. I have now included my own Loom.cs that I use for switching back to the main thread for UI updates. The single .cs file can be found in the build/csharp folder.
+
+The Loom.cs must always be on a Unity3D gameobject in order for it to work properly. I highly recommend creating a gameobject specifically for it and making sure the gameobject is never destroyed on load.
 
 Objective-C Client
 =======================
 
-The Objective-C files can be found in the src folder. Just drag and drop them into your project.
-
-Be warned, the Objective-C version does require manual cleanup to prevent memory leaks. For instance, if you used a block and access self and that object is about to dealloc. Then, you need to call the:
-```
-[someSocket removeListener: @"event" forKey:@"The Key You Specified for the Listener"];
-```
-Otherwise ARC will not reduce the retain count until the block has been released.
-
-Dependencies
---------------
-PocketSocket - https://github.com/zwopple/PocketSocket
-
-PocketSocket is required as the DIOSocket wraps a PSWebSocket and the TEventEmitter together to handle the packets and events.
-
-Getting Started
-------------------
-
-First thing import the proper header file
-```
-#import "DIOSocket.h"
-```
-
-Next up create an instance and setup events
-```
-self.socket = [[DIOSocket alloc] init];
-
-[self.socket on:@"connect" forKey:@"MyListenerKey" withBlock:^(id data){
-  //there is no data for the connect event;
-}];
-
-[self.socket on:@"error" forKey:@"MyListenerKey" withBlock:^(id data) {
-  //data is an NSError object.
-}];
-
-[self.socket on:@"close" forKey:@"MyListenerKey" withBlock:^(id data) {
-  //socket closed. There is no data
-}];
-
-[self.socket on:@"someevent" forKey:@"MyListenerKey" withBlock:^(id data) {
-  //On events from the server the data is actually an NSMutableArray
-  //The NSMutableArray is from the NSJSONSerialization
-  NSMutableArray *args = (NSMutableArray *)data;
-  if(args.count > 0) {
-    //do something with it
-    //When emitting the withData argument must have a compatible NSArray or
-    //NSMutableArray with data that is compatible with NSJSONSerialization
-    [self.socket emit:@"someevent" withData:args];
-  }
-}];
-
-[self.socket connect:[NSURLRequest requestWithURL:[NSURL urlWithString:@"ws://localhost:8080"]]];
-```
-
-Remember when emitting the withData arg must have a compatible NSArray or NSMutableArray that has data that is compatible with NSJSONSerialization. That means the data in the Array must be one of the following: NSDictionary,NSMutableDictionary,NSArray,NSMutableArray,NSNumber,NSNull, or NSString.
-
-Removing listeners on dealloc for a temporary object if app is not closing
-```
-- (void)dealloc {
-  [self.socket removeListener:@"connect" forKey:@"MyListenerKey"];
-  [self.socket removeListener:@"error" forKey:@"MyListenerKey"];
-  [self.socket removeListener:@"close" forKey:@"MyListenerKey"];
-  [self.socket removeListener:@"someevent" forKey:@"MyListenerKey"];
-}
-...
-```
+No longer supported. You will need to create your own.

@@ -16,9 +16,9 @@ namespace Data.io.Lib
 	public class Listener
 	{
 		public int type;
-		public Action<Object[]> fn;
+		public Delegate fn;
 
-		public Listener (int type, Action<Object[]> fn)
+		public Listener (int type, Delegate fn)
 		{
 			this.type = type;
 			this.fn = fn;

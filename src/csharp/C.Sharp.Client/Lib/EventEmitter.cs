@@ -22,7 +22,7 @@ namespace Data.io.Lib
 			listeners = new Dictionary<string, ArrayList> ();
 		}
 		// subscribe to an event
-		public EventEmitter on(string eventName, Action<Object[]> action) {
+		public EventEmitter on(string eventName, Delegate action) {
 			Listener ls = new Listener (0, action);
 
 			if (listeners.ContainsKey (eventName)) {
@@ -41,7 +41,7 @@ namespace Data.io.Lib
 		}
 
 		// subscribe to an event for only one trigger count
-		public EventEmitter once(string eventName, Action<Object[]> action) {
+		public EventEmitter once(string eventName, Delegate action) {
 			Listener ls = new Listener (1, action);
 			
 			if (listeners.ContainsKey (eventName)) {
@@ -60,7 +60,7 @@ namespace Data.io.Lib
 		}
 
 		// emit the data for the specified event
-		public EventEmitter emit(string eventName, object[] args) {
+		public EventEmitter emit(string eventName, params object[] args) {
 			ArrayList toRemove = new ArrayList ();
 
 			if(listeners.ContainsKey(eventName)) {
@@ -70,7 +70,16 @@ namespace Data.io.Lib
 					if(ls.type == 1)
 						toRemove.Add(ls);
 
-					ls.fn.Invoke(args);
+					if (args == null || args.Length == 0) {
+						ls.fn.DynamicInvoke ();
+						continue;
+					}
+
+					int allowedArgs = ls.fn.Method.GetParameters ().Length;
+					object[] realArgs = new object[allowedArgs];
+					Array.Copy (args, realArgs, allowedArgs);
+					ls.fn.DynamicInvoke (realArgs);
+
 				}
 
 				foreach(Listener ls in toRemove) {

@@ -39,20 +39,20 @@ namespace Data.io.Lib
 		// emits the close event when the socket closes
 		protected void onClose (object sender, CloseEventArgs e) {
 			this.isConnected = false;
-			emitter.emit ("close", null);
+			emitter.emit ("close");
 		}
 
 		// emits the error event
 		// ErrorEventArgs is the only argument in the array
 		protected void onError (object sender, ErrorEventArgs e) {
 			this.isConnected = false;
-			emitter.emit ("error", new object[] { e });
+			emitter.emit ("error", e);
 		}
 
 		// emits the connect event when socket successfully connects
 		protected void onOpen (object sender, EventArgs e) {
 			this.isConnected = true;
-			emitter.emit ("connect", null);
+			emitter.emit ("connect");
 		}
 
 		//handles the incoming data
@@ -64,31 +64,32 @@ namespace Data.io.Lib
 				JsonObject obj = (JsonObject)SimpleJson.SimpleJson.DeserializeObject(data);
 				if(obj != null) {
 					JsonArray arr = (JsonArray)obj["data"];
+					//Debug.Log(arr.ToString());
 					//emit the data through the eventemitter
 					emitter.emit ((string)obj["name"], arr.ToArray());
 				}
 			}
 			catch (Exception ex) {
-
+				//Debug.Log (ex.Message);
 			}
 		}
 
 		// subscribe to an event from the server with the callback
-		public Socket on(string eventName, Action<Object[]> action) {
+		public Socket on(string eventName, Delegate action) {
 			emitter.on (eventName, action);
 
 			return this;
 		}
 
 		// subscribe only for one event trigger count
-		public Socket once(string eventName, Action<Object[]> action) {
+		public Socket once(string eventName, Delegate action) {
 			emitter.once (eventName, action);
 
 			return this;
 		}
 
 		// emit the data for the event to the server
-		public Socket emit(string eventName, object[] args) {
+		public Socket emit(string eventName, params object[] args) {
 			Packet p = new Packet (eventName, args);
 
 			if (this.ws != null) {

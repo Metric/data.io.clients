@@ -1,6 +1,7 @@
 var EventEmitter = function() {
-  this.listeners = {};
 };
+
+EventEmitter.prototype.listeners = {};
 
 // subscribe to an event
 EventEmitter.prototype.on = function(event, cb) {
@@ -22,7 +23,7 @@ EventEmitter.prototype.on = function(event, cb) {
   return this;
 };
 
-// subscribe only once to and event
+// subscribe only once to an event
 EventEmitter.prototype.once = function(event, cb) {
   var listeners = this.listeners[event];
 

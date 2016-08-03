@@ -26,6 +26,11 @@ namespace Data.io.Lib
 		public Packet (string eventName, object[] data)
 		{
 			this.name = eventName;
+
+			if (data == null) {
+				data = new object[] {};
+			}
+
 			this.data = data;
 		}
 
