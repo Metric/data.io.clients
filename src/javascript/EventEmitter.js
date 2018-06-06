@@ -1,75 +1,65 @@
-var EventEmitter = function() {
-};
+'use strict';
 
-EventEmitter.prototype.listeners = {};
-
-// subscribe to an event
-EventEmitter.prototype.on = function(event, cb) {
-  var listeners = this.listeners[event];
-
-  if(listeners) {
-    var listener = {type: 0, fn: cb};
-    listeners.push(listener);
-  }
-  else {
-    listeners = [];
-
-    var listener = {type: 0, fn: cb};
-    listeners.push(listener);
-
-    this.listeners[event] = listeners;
-  }
-
-  return this;
-};
-
-// subscribe only once to an event
-EventEmitter.prototype.once = function(event, cb) {
-  var listeners = this.listeners[event];
-
-  if(listeners) {
-    var listener = {type: 1, fn: cb};
-    listeners.push(listener);
-  }
-  else {
-    listeners = [];
-
-    var listener = {type: 1, fn: cb};
-    listeners.push(listener);
-
-    this.listeners[event] = listeners;
-  }
-
-  return this;
-};
-
-// emit the event with the provided arguments
-EventEmitter.prototype.emit = function(event) {
-  var args = [];
-  var _this = this;
-
-  if(arguments.length > 1) {
-    args = Array.prototype.slice.call(arguments, 1, arguments.length);
-  }
-
-  var listeners = this.listeners[event];
-
-  if(listeners) {
-    var shouldRemove = [];
-
-    for(var i = 0; i < listeners.length; i++ ){
-      var item = listeners[i];
-      item.fn.apply(_this, args);
-
-      if(item.type == 1)
-        shouldRemove.push(item);
+class EventEmitter {
+    constructor() {
+        this.listeners = {};
     }
 
-    for(var i = 0; i < shouldRemove.length; i++) {
-      var item = shouldRemove[i];
-      listeners.splice(listeners.indexOf(item), 1);
-    }
-  }
+    remove(event, cb) {
+        if(cb && event) {
+            const l = this.listeners[event];
 
-  return this;
-};
+            if(l) {
+                const i = l.findIndex(c => c.fn === cb);
+
+                if(i > -1) {
+                    l.splice(i,1);
+                }
+            }
+        }
+        else if(event) {
+            delete this.listeners[event];
+        }
+
+        return this;
+    }
+
+    on(event, cb) {
+        let list = this.listeners[event] || [];
+
+        const l = {type: 0, fn: cb};
+        list.push(l);
+
+        this.listeners[event] = list;
+
+        return this;
+    }
+
+    once(event, cb) {
+        let list = this.listeners[event] || [];
+        
+        const l = {type: 1, fn: cb};
+        list.push(l);
+
+        this.listeners[event] = list;
+
+        return this;
+    }
+
+    emit(event, ...args) {
+        const list = this.listeners[event];
+
+        if(list) {
+            for(let i = 0; i < list.length; i++) {
+                const ln = list[i];
+                if(ln.type === 1) {
+                    list.splice(i,1);
+                    i--;
+                }
+                ln.fn.apply(this, args);
+            }
+        }
+
+        return this;
+    }
+}

@@ -9,7 +9,7 @@
 // ------------------------------------------------------------------------------
 using System;
 
-namespace Data.io.Lib
+namespace Data.io
 {
 	//Listener class for the EventEmitter
 	//EventEmitter uses this internally

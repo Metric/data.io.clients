@@ -1,7 +1,0 @@
-/Users/aaronklick/Documents/data.io.clients/src/csharp/C.Sharp.Client/obj/Debug/.NETFramework,Version=v4.0.AssemblyAttribute.cs
-/Users/aaronklick/Documents/data.io.clients/src/csharp/C.Sharp.Client/bin/Debug/SimpleJson.dll
-/Users/aaronklick/Documents/data.io.clients/src/csharp/C.Sharp.Client/bin/Debug/websocket-sharp.dll
-/Users/aaronklick/Documents/data.io.clients/src/csharp/C.Sharp.Client/bin/Debug/DataIOClient.dll.mdb
-/Users/aaronklick/Documents/data.io.clients/src/csharp/C.Sharp.Client/bin/Debug/DataIOClient.dll
-/Users/aaronklick/Documents/data.io.clients/src/csharp/C.Sharp.Client/obj/Debug/DataIOClient.dll
-/Users/aaronklick/Documents/data.io.clients/src/csharp/C.Sharp.Client/obj/Debug/DataIOClient.dll.mdb

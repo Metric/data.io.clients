@@ -10,7 +10,7 @@
 using System;
 using SimpleJson;
 
-namespace Data.io.Lib
+namespace Data.io
 {
 	//Simple packet wrapper for SimpleJson parsing
 	//And easy toJson function for sending
